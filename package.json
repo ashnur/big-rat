@@ -37,6 +37,7 @@
     "double-bits": "^1.1.1"
   },
   "devDependencies": {
+    "jsverify": "^0.6.0-beta.2",
     "signum": "^1.0.0",
     "tape": "^4.0.0"
   }
