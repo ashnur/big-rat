@@ -1,4 +1,5 @@
 'use strict'
+Error.stackTraceLimit = Infinity
 
 var jsv = require('jsverify')
 var tape = require('tape')
@@ -35,17 +36,21 @@ function shrinkBN(bigint){
        :                          one
 }
 
+function shrinkNum(n){
+  return n / Math.log(Math.abs(n))
+}
+
 function shrinkString(bigint){
   return bigint.slice(0, bigint.length - 1)
 }
 
 function shrinkInt(num){
-  return signum(num) * (Math.abs(num) - 1)
+  return signum(num) * Math.abs(shrinkNum(num))
 }
 
 function shrinkFloat(num){
   var dp = decimalPlaces(num)
-  return (signum(num) * (Math.abs(num) - 1)).toFixed(dp - 1)
+  return (signum(num) * (Math.abs(shrinkNum(num)))).toFixed(dp - 1)
 }
 
 var arbInput = function(a){
@@ -60,12 +65,12 @@ var arbInput = function(a){
                       :            jsv.generator.falsy
                })
   , shrink: jsv.shrink.bless(function(input){
-              return isBN(input)              ? [shrinkBN(input)]
-                   : typeof input == 'string' ? [shrinkString(input)]
-                   : typeof input == 'number' ? input === Math.floor(input) ? [shrinkInt(input)]
-                                              :                               [shrinkFloat(input)]
-                   : isRat(input)             ? [rat(shrinkBN(rat[0]), shrinkBN(rat[1]))]
-                   :                            [undefined]
+              return isBN(input)              ? [input, shrinkBN(input)]
+                   : typeof input == 'string' ? [input, shrinkString(input)]
+                   : typeof input == 'number' ? input === Math.floor(input) ? [input, shrinkInt(input)]
+                                              :                               [input, shrinkFloat(input)]
+                   : isRat(input)             ? [input, rat(shrinkBN(rat[0] || one), shrinkBN(rat[1] || one))]
+                   :                            [input, undefined]
             })
   , show: function(rat){
       return toString(rat)
